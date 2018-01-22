@@ -5,36 +5,34 @@
     <body>
         <script>
         var customers, invoices;
-        // $.post("customer.json", function( data ) {
-        //     var customers = JSON.parse(data);
-        //     debugger;
-        // });
-        // $.post("invoice.json", function( data ) {
-        //     var invoices = JSON.parse(data);
-        //     debugger;
-        // });
-        $.when(
-            $.post("customer.json", function( data ) {
-                customers = JSON.parse(data);
-            }),
-            $.post("invoice.json", function( data ) {
-                invoices = JSON.parse(data);
-            })
-        ).then(function () {
-            for (i = 0; i < customers.length; i++) {
-                var customer = customers[i];
-                var ba = customer['BillAddress'];
-                var addr1 = ba['Addr1'];
-                var pc = ba['PostalCode'];
-                var invoices = [];
-                for (j = 0; j < invoices.lengthl j++) {
-                    var invoice = invoices[i];
-                    var _ba = invoice['BillAddress'];
-                    var addr1 = _ba['Addr1'];
-                    var pc = _ba['PostalCode'];
-                    debugger
+        var self = this;
+        $.get("invoice.json", function( data ) {
+            self.invoices = JSON.parse(data);
+            $.get("customer.json", function( data ) {
+                self.customers = JSON.parse(data);
+
+                for (i = 0; i < customers.length; i++) {
+                    var customer = self.customers[i];
+                    var ba = customer['BillAddress'];
+                    if(ba['Addr1']){
+                        var addr1 = ba['Addr1'];
+                    }
+                    var pc = ba['PostalCode'];
+                    var invoices = [];
+                    for (j = 0; j < invoices.length; j++) {
+                        var invoice = self.invoices[i];
+                        var _ba = invoice['BillAddress'];
+                        var _addr1 = _ba['Addr1'];
+                        var _pc = _ba['PostalCode'];
+                        if (addr1 == _addr1 && pc == _pc) {
+                            invoices.push(invoice);
+                        }
+                    }
+                    customer['invoices'] = invoices;
                 }
-            }
+
+                debugger
+            });
         });
         </script>
     </body>
