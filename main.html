@@ -5,33 +5,31 @@
     <body>
         <script>
         var customers, invoices;
+        var count = 0;
         var self = this;
+
         $.get("invoice.json", function( data ) {
             self.invoices = JSON.parse(data);
             $.get("customer.json", function( data ) {
                 self.customers = JSON.parse(data);
 
-                for (i = 0; i < customers.length; i++) {
+                for (i = 0; i < self.customers.length; i++) {
                     var customer = self.customers[i];
-                    var ba = customer['BillAddress'];
-                    if (ba) {
-                        var addr1 = ba['Addr1'];
-                        var pc = ba['PostalCode'];
-                        var invoices = [];
-                        for (j = 0; j < invoices.length; j++) {
-                            var invoice = self.invoices[i];
-                            var _ba = invoice['BillAddress'];
-                            var _addr1 = _ba['Addr1'];
-                            var _pc = _ba['PostalCode'];
-                            if (addr1 == _addr1 && pc == _pc) {
-                                invoices.push(invoice);
-                            }
+                    // var ba = customer['BillAddress'];
+                    var listId = customer['ListID'];
+                    var _invoices = [];
+                    for (j = 0; j < self.invoices.length; j++) {
+                        var invoice = self.invoices[j];
+                        var cr = invoice['CustomerRef'];
+                        var _listId = cr['ListID'];
+                        if (listId == _listId /*&& pc == _pc*/) {
+                            _invoices.push(invoice);
                         }
-                        customer['invoices'] = invoices;
-                    } else {
-                        customer['invoices'] = [];
                     }
+                    customer['invoices'] = _invoices;
+                    if (_invoices.length > 0) { self.count++; }
                 }
+                console.log(self.count);
                 debugger
             });
         });
