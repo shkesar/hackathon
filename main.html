@@ -5,54 +5,330 @@
     <body>
         <script>
         var customers, invoices;
+        var count = 0;
         var self = this;
+
+
+        var companyFactor = function (customer) {
+
+        var fullName = customer["FullName"].toLowerCase();
+
+        if (!fullName) {
+
+            return 0.5;
+
+        }
+
+        if (fullName.indexOf(" llc ") || fullName.indexOf(" llc.") || fullName.indexOf(" inc.") || fullName.indexOf(" inc ")) {
+
+            return 0.8;
+
+        } else {
+
+            return 0.6;
+
+        }
+
+        }
+
+
+
+        var isLineItem = function (item) {
+
+        if (item && item['Amount']) {
+
+            return true;
+
+        }
+
+        }
+
+
+
+        var lineItemCountWeightage = function (invoice) {
+
+        var invoiceItems = invoice['InvoiceLineRet'];
+
+        var count = 0;
+
+        var items;
+
+        if (Array.isArray(invoiceItems)) {
+
+            items = invoiceItems.values();
+
+            debugger
+
+            var count = 0;
+
+        } else  {
+
+            items = [invoiceItems];
+
+        }
+
+
+
+        for (i = 0; i < items.length; i++) {
+
+            if (isLineItem(items[i])) {
+
+                count++;
+
+            }
+
+        }
+
+        console.log(count);
+
+        return count;
+
+        }
+
+
+
+        var numInvoiceWeight = function (customer) {
+
+        var invoices = customer['invoices'];
+
+        var count = invoices.length || 0;
+
+        if (count > 5) {
+
+            return 0.9;
+
+        } else if (count == 5 || count == 4) {
+
+            return 0.8;
+
+        } else if (count == 2 || count == 3) {
+
+            return 0.7;
+
+        } else if (count == 1) {
+
+            return 0.6;
+
+        } else {
+
+            return 0.5;
+
+        }
+
+        };
+
+
+
+        var ageSelector = ".teaser-person";
+
+        var relativeSelector = ".teaser-table tr:nth-child(2) td:nth-child(4)";
+
+
+
+        var AGE_API = "https://www.intelius.com/people-search/";
+
+        var setPersonalInfo = function (customer) {
+
+        var fname = customer['FirstName'];
+
+        var lname = customer['LastName'];
+
+        var billAddress = customer['BillAddress'];
+
+        var ship = customer['ShipAddress'];
+
+        var addr = ship ? ship : billAddress;
+
+        if (addr) {
+
+            var city = addr['City'];
+
+            var state = addr['State'];
+
+
+
+            var url = AGE_API + fname + "-" + lname + "/" + (city ? city : state);
+
+            $.get({
+
+                url: url,
+
+                success: function (html) {
+
+                    var relativeTag = $(html).find(relativeSelector).html();
+
+                    var count = (relativeTag.match(/span/g) || []).length / 2;
+
+                    var ageTag = $(html).find(ageSelector).text();
+
+                    var age = ageTag.substring(ageTag.indexOf("age")).split(" ")[1];
+
+                    customer['age'] = age;
+
+                    customer['relativeCount'] = count;
+
+                },
+
+                async: false
+
+            });
+
+        }
+
+        };
+
+
+
+        var numBalance = function(customer) {
+            var dueBalance = customer['Balance'];
+            debugger
+            if (dueBalance > 0){
+                return 0.2;
+            }
+            else if(dueBalance < 0 ){
+                return 0.8;
+            }
+            else{
+                
+                return 0.5;
+            }
+        }
+ 
+        var sinceMonth = function (customer){
+            if(customer['JobEndDate'])
+            {
+                var sDate = customer['JobEndDate'];
+                //console.log('JobStartDate');
+                var today = new Date();
+                var date =  new Date(sDate);
+                //console.log(date);
+                var year1=today.getFullYear();
+                //console.log("year1", year1);
+                var year2=date.getFullYear();
+                //console.log("year2", year2);
+                var month1=today.getMonth();
+                //console.log("Month1", month1);
+                var month2=date.getMonth();
+                //console.log("Month2", month2);
+                numberOfMonths = (year2 - year1) * 12 + (month2 - month1) - 1;
+                //console.log(numberOfMonths);
+                
+                if(numberOfMonths >=0  && numberOfMonths <= 3 ){
+                    return 0.1
+                }
+                else if(numberOfMonths >=4 &&numberOfMonths <= 6 ){
+                    return 0.2
+                }
+                else if(numberOfMonths >=7 &&numberOfMonths <= 9 ){
+                    return 0.4
+                }
+                else if(numberOfMonths >=10 &&numberOfMonths <= 12){
+                    return 0.6
+                }
+                else if(numberOfMonths >=13 &&numberOfMonths <= 15){
+                    return 0.8
+                }
+                else if(numberOfMonths >=15){
+                    return 0.9
+                }
+
+            }
+            else if(customer['JobStartDate']){
+                sDate = customer['JobStartDate'];
+                //console.log('JobStartDate');
+                var today = new Date();
+                var date =  new Date(sDate);
+                //console.log(date);
+                var year1=today.getFullYear();
+                //console.log("year1", year1);
+                var year2=date.getFullYear();
+                //console.log("year2", year2);
+                var month1=today.getMonth();
+                //console.log("Month1", month1);
+                var month2=date.getMonth();
+                //console.log("Month2", month2);
+                numberOfMonths = 0-((year2 - year1) * 12 + (month2 - month1));
+                //console.log(numberOfMonths);
+                
+                if(numberOfMonths >=0  && numberOfMonths <= 3 ){
+                    return 0.1
+                }
+                else if(numberOfMonths >=4 &&numberOfMonths <= 6 ){
+                    return 0.2
+                }
+                else if(numberOfMonths >=7 &&numberOfMonths <= 9 ){
+                    return 0.4
+                }
+                else if(numberOfMonths >=10 &&numberOfMonths <= 12){
+                    return 0.6
+                }
+                else if(numberOfMonths >=13 &&numberOfMonths <= 15){
+                    return 0.8
+                }
+                else if(numberOfMonths >=15){
+                    return 0.9
+                }
+
+            }
+            else{
+                return 0.5
+            }
+        }
+
+
+        var currentMonthCustomer = function(){
+            var today = new Date();
+            var todayMonth=today.getMonth()+1;
+            console.log("month",todayMonth );
+            switch(todayMonth){
+                case 1:
+                case 5:
+                case 7:
+                case 11: 
+                    return 0.8;
+                    break;
+                case 2:
+                case 4:
+                case 8:
+                case 10:
+                    return 0.6;
+                    break;
+                case 6: 
+                case 12:
+                    return 0.9;
+                    break;
+                default:
+                    return 0.5;
+                    break;
+            }       
+        }
+
         $.get("invoice.json", function( data ) {
             self.invoices = JSON.parse(data);
             $.get("customer.json", function( data ) {
                 self.customers = JSON.parse(data);
-
-                for (i = 0; i < customers.length; i++) {
+                
+                for (i = 0; i < self.customers.length; i++) {
+                    debugger
                     var customer = self.customers[i];
-                    var ba = customer['BillAddress'];
-<<<<<<< HEAD
-                    if(ba['Addr1']){
-                        var addr1 = ba['Addr1'];
-                    }
-                    var pc = ba['PostalCode'];
-                    var invoices = [];
-                    for (j = 0; j < invoices.length; j++) {
-                        var invoice = self.invoices[i];
-                        var _ba = invoice['BillAddress'];
-                        var _addr1 = _ba['Addr1'];
-                        var _pc = _ba['PostalCode'];
-                        if (addr1 == _addr1 && pc == _pc) {
-                            invoices.push(invoice);
+                    //console.log("balance", customer['Balance'])
+                    var number = currentMonthCustomer();
+                    console.log("number", number);
+                    var listId = customer['ListID'];
+                    var _invoices = [];
+                    for (j = 0; j < self.invoices.length; j++) {
+                        var invoice = self.invoices[j];
+                        var cr = invoice['CustomerRef'];
+                        var _listId = cr['ListID'];
+                        if (listId == _listId /*&& pc == _pc*/) {
+                            _invoices.push(invoice);
                         }
                     }
-                    customer['invoices'] = invoices;
+                    customer['invoices'] = _invoices;
+                    if (_invoices.length > 0) { self.count++; }
                 }
-
-=======
-                    if (ba) {
-                        var addr1 = ba['Addr1'];
-                        var pc = ba['PostalCode'];
-                        var invoices = [];
-                        for (j = 0; j < invoices.length; j++) {
-                            var invoice = self.invoices[i];
-                            var _ba = invoice['BillAddress'];
-                            var _addr1 = _ba['Addr1'];
-                            var _pc = _ba['PostalCode'];
-                            if (addr1 == _addr1 && pc == _pc) {
-                                invoices.push(invoice);
-                            }
-                        }
-                        customer['invoices'] = invoices;
-                    } else {
-                        customer['invoices'] = [];
-                    }
-                }
->>>>>>> ea29785852aadfc8dd46cdeb7bd44ccf03803054
-                debugger
+                console.log(self.count);
+                
             });
         });
         </script>
